@@ -264,11 +264,19 @@ async def root():
 @api_router.post("/webhook/{secret}")
 async def telegram_webhook(secret: str, request: Request):
     """Handle Telegram webhook"""
+    logging.info(f"Webhook called with secret: {secret}")
+    
     if secret != WEBHOOK_SECRET:
+        logging.error(f"Invalid webhook secret received: {secret}, expected: {WEBHOOK_SECRET}")
         raise HTTPException(status_code=403, detail="Invalid webhook secret")
     
     try:
+        raw_body = await request.body()
+        logging.info(f"Raw webhook body: {raw_body}")
+        
         update_data = await request.json()
+        logging.info(f"Parsed webhook data: {update_data}")
+        
         await handle_telegram_update(update_data)
         return {"status": "ok"}
     except Exception as e:
