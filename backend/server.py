@@ -277,8 +277,10 @@ async def telegram_webhook(secret: str, request: Request):
 
 async def handle_telegram_update(update_data: Dict[str, Any]):
     """Process incoming Telegram update"""
+    logging.info(f"Received telegram update: {update_data}")
     message = update_data.get('message')
     if not message:
+        logging.info("No message in update")
         return
     
     chat = message.get('chat', {})
@@ -286,7 +288,10 @@ async def handle_telegram_update(update_data: Dict[str, Any]):
     text = message.get('text', '')
     user_info = message.get('from', {})
     
+    logging.info(f"Processing message: chat_id={chat_id}, text='{text}', user={user_info.get('username', 'unknown')}")
+    
     if not chat_id:
+        logging.error("No chat_id in message")
         return
     
     # Get or create user
