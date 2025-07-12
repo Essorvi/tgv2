@@ -158,7 +158,9 @@ async def send_telegram_message(chat_id: int, text: str, parse_mode: str = "Mark
     }
     
     try:
+        logging.info(f"Sending message to chat_id={chat_id}, text length={len(text)}")
         response = requests.post(url, json=payload, timeout=10)
+        logging.info(f"Telegram API response: status={response.status_code}, response={response.text}")
         return response.status_code == 200
     except Exception as e:
         logging.error(f"Failed to send Telegram message: {e}")
