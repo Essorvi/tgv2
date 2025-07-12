@@ -548,16 +548,60 @@ async def handle_balance_command(chat_id: int, user: User):
 
 async def handle_referral_command(chat_id: int, user: User):
     """Handle referral command"""
-    bot_username = "YourBotUsername"  # Replace with actual bot username
+    bot_username = "search1_test_bot"  # Replace with actual bot username
     referral_link = f"https://t.me/{bot_username}?start={user.referral_code}"
     
-    referral_text = f"🔗 *Ваша реферальная ссылка:*\n\n"
-    referral_text += f"`{referral_link}`\n\n"
-    referral_text += "💰 *Условия:*\n"
-    referral_text += "• За каждого приглашенного друга вы получаете +1 попытку\n"
-    referral_text += "• Друг должен перейти по вашей ссылке\n"
-    referral_text += "• Самореферальные переходы не засчитываются\n\n"
-    referral_text += f"👥 *Уже приглашено:* {user.total_referrals} друзей"
+    # Get referral statistics
+    referrals = await db.referrals.find({"referrer_id": user.telegram_id}).to_list(100)
+    total_earned = len(referrals)
+    
+    referral_text = "🔗 *═══════════════════════════*\n"
+    referral_text += "      💰 *РЕФЕРАЛЬНАЯ ПРОГРАММА*\n"
+    referral_text += "*═══════════════════════════* 🔗\n\n"
+    
+    referral_text += "🎯 *═══ ВАША ССЫЛКА ═══*\n"
+    referral_text += f"🔗 `{referral_link}`\n\n"
+    referral_text += "📋 *Нажмите на ссылку выше для копирования*\n\n"
+    
+    referral_text += "📊 *═══ ВАША СТАТИСТИКА ═══*\n"
+    referral_text += f"👥 *Приглашено друзей:* `{user.total_referrals}`\n"
+    referral_text += f"💎 *Заработано попыток:* `{total_earned}`\n"
+    referral_text += f"🎯 *Ваш код:* `{user.referral_code}`\n\n"
+    
+    referral_text += "💰 *═══ КАК ЭТО РАБОТАЕТ ═══*\n"
+    referral_text += "1️⃣ *Поделитесь* ссылкой с друзьями\n"
+    referral_text += "2️⃣ *Друг переходит* по вашей ссылке\n"
+    referral_text += "3️⃣ *Друг регистрируется* в боте\n"
+    referral_text += "4️⃣ *Вы получаете* +1 попытку поиска\n"
+    referral_text += "5️⃣ *Повторяйте* для неограниченных попыток!\n\n"
+    
+    referral_text += "🎁 *═══ БОНУСЫ ═══*\n"
+    referral_text += "• 💎 За каждого друга: +1 попытка\n"
+    referral_text += "• 🔄 Попытки накапливаются навсегда\n"
+    referral_text += "• 🚀 Неограниченное количество рефералов\n"
+    referral_text += "• 👥 Реферал тоже получает попытку\n\n"
+    
+    referral_text += "📱 *═══ ГДЕ ПОДЕЛИТЬСЯ ═══*\n"
+    referral_text += "• 💬 В мессенджерах (WhatsApp, Viber)\n"
+    referral_text += "• 📱 В социальных сетях (VK, Instagram)\n"
+    referral_text += "• 👨‍👩‍👧‍👦 С семьей и друзьями\n"
+    referral_text += "• 💼 С коллегами по работе\n\n"
+    
+    if user.total_referrals >= 10:
+        referral_text += "🏆 *═══ СТАТУС VIP ═══*\n"
+        referral_text += "🌟 Поздравляем! Вы VIP-реферер!\n"
+        referral_text += f"👑 {user.total_referrals} приглашенных друзей\n\n"
+    elif user.total_referrals >= 5:
+        referral_text += "🥇 *═══ СТАТУС МАСТЕР ═══*\n"
+        referral_text += "⭐ Отличная работа! Вы мастер рефералов!\n"
+        referral_text += f"🏅 {user.total_referrals} приглашенных друзей\n\n"
+    elif user.total_referrals >= 1:
+        referral_text += "🥉 *═══ ПЕРВЫЕ УСПЕХИ ═══*\n"
+        referral_text += "👍 Хорошее начало!\n"
+        referral_text += f"📈 {user.total_referrals} приглашенных друзей\n\n"
+    
+    referral_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    referral_text += "💡 *Чем больше друзей, тем больше поисков!*"
     
     await send_telegram_message(chat_id, referral_text)
 
