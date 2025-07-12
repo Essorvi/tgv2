@@ -343,26 +343,58 @@ async def handle_start_command(chat_id: int, text: str, user: User):
     """Handle /start command"""
     # Check for referral code
     parts = text.split()
+    referral_bonus = False
     if len(parts) > 1:
         referral_code = parts[1]
-        await process_referral(user.telegram_id, referral_code)
+        referral_bonus = await process_referral(user.telegram_id, referral_code)
     
-    welcome_text = f"👋 *Добро пожаловать, {user.first_name or 'пользователь'}!*\n\n"
-    welcome_text += "🔍 *Usersbox Bot* - поиск информации по базам данных\n\n"
-    welcome_text += f"💎 *Доступно попыток:* {user.attempts_remaining}\n"
-    welcome_text += f"👥 *Рефералов:* {user.total_referrals}\n\n"
-    welcome_text += "*Доступные команды:*\n"
-    welcome_text += "• `/search [запрос]` - поиск информации\n"
-    welcome_text += "• `/balance` - проверить баланс попыток\n"
-    welcome_text += "• `/referral` - получить реферальную ссылку\n"
-    welcome_text += "• `/help` - помощь\n\n"
-    welcome_text += "📝 *Просто отправьте мне любой текст для поиска!*"
+    # Create beautiful welcome message
+    welcome_text = "🌟 *═══════════════════════════*\n"
+    welcome_text += f"      👋 *Добро пожаловать, {user.first_name or 'пользователь'}!*\n"
+    welcome_text += "*═══════════════════════════* 🌟\n\n"
+    
+    welcome_text += "🔍 *USERSBOX SEARCH BOT* 🔍\n"
+    welcome_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    welcome_text += "🎯 *Мощный поиск по базам данных*\n"
+    welcome_text += "📊 *Более 100+ источников информации*\n"
+    welcome_text += "⚡ *Мгновенные результаты поиска*\n\n"
+    
+    # Status section
+    welcome_text += "📈 *═══ ВАШ СТАТУС ═══*\n"
+    welcome_text += f"💎 *Попыток поиска:* `{user.attempts_remaining}`\n"
+    welcome_text += f"👥 *Приглашено друзей:* `{user.total_referrals}`\n"
+    welcome_text += f"📅 *Дата регистрации:* `{user.created_at.strftime('%d.%m.%Y')}`\n"
+    
+    if referral_bonus:
+        welcome_text += "\n🎉 *БОНУС!* Вы получили +1 попытку за переход по реферальной ссылке!\n"
+    
+    welcome_text += "\n🎮 *═══ КОМАНДЫ БОТА ═══*\n"
+    welcome_text += "🔍 `/search [запрос]` - поиск информации\n"
+    welcome_text += "💰 `/balance` - проверить баланс попыток\n"
+    welcome_text += "🔗 `/referral` - получить реферальную ссылку\n"
+    welcome_text += "📖 `/help` - подробная справка\n"
+    welcome_text += "📊 `/stats` - статистика ваших поисков\n"
     
     if user.is_admin:
-        welcome_text += "\n\n🔧 *Админ команды:*\n"
-        welcome_text += "• `/admin` - админ панель\n"
-        welcome_text += "• `/give [user_id] [attempts]` - выдать попытки\n"
-        welcome_text += "• `/stats` - статистика бота"
+        welcome_text += "\n🔧 *═══ АДМИН ПАНЕЛЬ ═══*\n"
+        welcome_text += "👑 `/admin` - панель администратора\n"
+        welcome_text += "💎 `/give [ID] [попытки]` - выдать попытки\n"
+        welcome_text += "📈 `/dashboard` - полная статистика\n"
+        welcome_text += "👥 `/users` - список пользователей\n"
+        welcome_text += "🔍 `/searches` - история поисков\n"
+    
+    welcome_text += "\n💡 *═══ КАК ПОЛЬЗОВАТЬСЯ ═══*\n"
+    welcome_text += "📝 Просто отправьте мне любой текст для поиска:\n"
+    welcome_text += "• `+79123456789` - поиск по телефону\n"
+    welcome_text += "• `ivan@mail.ru` - поиск по email\n"
+    welcome_text += "• `Иван Петров` - поиск по имени\n\n"
+    
+    welcome_text += "💸 *═══ ПОЛУЧИТЬ ПОПЫТКИ ═══*\n"
+    welcome_text += "🎁 За каждого приглашенного друга: *+1 попытка*\n"
+    welcome_text += "🔗 Используйте команду `/referral` для получения ссылки\n\n"
+    
+    welcome_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    welcome_text += "🚀 *Готов к поиску? Отправьте запрос прямо сейчас!*"
     
     await send_telegram_message(chat_id, welcome_text)
 
