@@ -667,12 +667,68 @@ async def handle_help_command(chat_id: int, user: User):
 
 async def handle_admin_command(chat_id: int, text: str, user: User):
     """Handle admin commands"""
-    admin_text = "🔧 *Админ панель*\n\n"
-    admin_text += "*Доступные команды:*\n"
-    admin_text += "• `/give [user_id] [attempts]` - выдать попытки пользователю\n"
-    admin_text += "• `/stats` - статистика бота\n\n"
-    admin_text += "*Примеры:*\n"
-    admin_text += "• `/give 123456789 5` - выдать 5 попыток пользователю\n"
+    # Get system statistics
+    total_users = await db.users.count_documents({})
+    total_searches = await db.searches.count_documents({})
+    total_referrals = await db.referrals.count_documents({})
+    successful_searches = await db.searches.count_documents({"success": True})
+    
+    # Recent activity (last 24 hours)
+    from datetime import datetime, timedelta
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    recent_users = await db.users.count_documents({"created_at": {"$gte": yesterday}})
+    recent_searches = await db.searches.count_documents({"timestamp": {"$gte": yesterday}})
+    
+    # Top users by referrals
+    top_referrers = await db.users.find().sort("total_referrals", -1).limit(5).to_list(5)
+    
+    admin_text = "👑 *═══════════════════════════*\n"
+    admin_text += "      🔧 *АДМИН ПАНЕЛЬ*\n"
+    admin_text += "*═══════════════════════════* 👑\n\n"
+    
+    admin_text += "📊 *═══ ОБЩАЯ СТАТИСТИКА ═══*\n"
+    admin_text += f"👥 *Всего пользователей:* `{total_users}`\n"
+    admin_text += f"🔍 *Всего поисков:* `{total_searches}`\n"
+    admin_text += f"✅ *Успешных поисков:* `{successful_searches}`\n"
+    admin_text += f"🔗 *Всего рефералов:* `{total_referrals}`\n"
+    
+    if total_searches > 0:
+        success_rate = (successful_searches / total_searches) * 100
+        admin_text += f"📈 *Успешность:* `{success_rate:.1f}%`\n"
+    admin_text += "\n"
+    
+    admin_text += "📈 *═══ АКТИВНОСТЬ (24ч) ═══*\n"
+    admin_text += f"🆕 *Новых пользователей:* `{recent_users}`\n"
+    admin_text += f"🔍 *Поисков за день:* `{recent_searches}`\n\n"
+    
+    admin_text += "🏆 *═══ ТОП РЕФЕРЕРЫ ═══*\n"
+    for i, referrer in enumerate(top_referrers[:3], 1):
+        name = referrer.get('first_name', 'Неизвестно')[:15]
+        refs = referrer.get('total_referrals', 0)
+        admin_text += f"{i}. `{name}` - {refs} рефералов\n"
+    admin_text += "\n"
+    
+    admin_text += "🔧 *═══ АДМИН КОМАНДЫ ═══*\n"
+    admin_text += "💎 `/give [ID] [попытки]` - выдать попытки\n"
+    admin_text += "📊 `/dashboard` - подробная статистика\n"
+    admin_text += "👥 `/users` - список пользователей\n"
+    admin_text += "🔍 `/searches` - история поисков\n"
+    admin_text += "📤 `/broadcast [сообщение]` - рассылка\n"
+    admin_text += "🚫 `/ban [ID]` - заблокировать пользователя\n"
+    admin_text += "✅ `/unban [ID]` - разблокировать\n"
+    admin_text += "🔄 `/restart` - перезапустить систему\n\n"
+    
+    admin_text += "📋 *═══ ПОЛЕЗНЫЕ ID ═══*\n"
+    admin_text += f"🤖 *Ваш ID:* `{user.telegram_id}`\n"
+    admin_text += f"🎯 *Ваш код:* `{user.referral_code}`\n\n"
+    
+    admin_text += "⚠️ *═══ БЫСТРЫЕ ДЕЙСТВИЯ ═══*\n"
+    admin_text += "• Выдать 10 попыток: `/give [ID] 10`\n"
+    admin_text += "• Посмотреть пользователя: `/user [ID]`\n"
+    admin_text += "• Очистить историю: `/clear [ID]`\n\n"
+    
+    admin_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    admin_text += "👑 *Полный контроль над системой*"
     
     await send_telegram_message(chat_id, admin_text)
 
