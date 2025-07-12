@@ -490,14 +490,59 @@ async def handle_search_command(chat_id: int, text: str, user: User):
 
 async def handle_balance_command(chat_id: int, user: User):
     """Handle balance command"""
-    balance_text = f"💎 *Ваш баланс попыток*\n\n"
-    balance_text += f"🔍 *Доступно поисков:* {user.attempts_remaining}\n"
-    balance_text += f"👥 *Приглашено друзей:* {user.total_referrals}\n"
-    balance_text += f"📅 *Регистрация:* {user.created_at.strftime('%d.%m.%Y')}\n\n"
+    # Get user's search history
+    recent_searches = await db.searches.find({"user_id": user.telegram_id}).sort("timestamp", -1).limit(5).to_list(5)
+    total_searches = await db.searches.count_documents({"user_id": user.telegram_id})
+    successful_searches = await db.searches.count_documents({"user_id": user.telegram_id, "success": True})
     
+    balance_text = "💰 *═══════════════════════════*\n"
+    balance_text += "      💎 *ВАШ БАЛАНС И СТАТИСТИКА*\n"
+    balance_text += "*═══════════════════════════* 💰\n\n"
+    
+    # Balance section
+    balance_text += "💎 *═══ БАЛАНС ПОПЫТОК ═══*\n"
+    balance_text += f"🔍 *Доступно поисков:* `{user.attempts_remaining}`\n"
+    balance_text += f"👥 *Приглашено друзей:* `{user.total_referrals}`\n"
+    balance_text += f"📅 *Регистрация:* `{user.created_at.strftime('%d.%m.%Y %H:%M')}`\n"
+    balance_text += f"⏰ *Последняя активность:* `{user.last_active.strftime('%d.%m.%Y %H:%M')}`\n\n"
+    
+    # Statistics section
+    balance_text += "📊 *═══ СТАТИСТИКА ПОИСКОВ ═══*\n"
+    balance_text += f"🔍 *Всего поисков:* `{total_searches}`\n"
+    balance_text += f"✅ *Успешных:* `{successful_searches}`\n"
+    
+    if total_searches > 0:
+        success_rate = (successful_searches / total_searches) * 100
+        balance_text += f"📈 *Успешность:* `{success_rate:.1f}%`\n"
+    else:
+        balance_text += f"📈 *Успешность:* `0%`\n"
+    
+    balance_text += f"🎯 *Реферальный код:* `{user.referral_code}`\n\n"
+    
+    # Recent searches
+    if recent_searches:
+        balance_text += "🕐 *═══ ПОСЛЕДНИЕ ПОИСКИ ═══*\n"
+        for i, search in enumerate(recent_searches[:3], 1):
+            status = "✅" if search.get('success', False) else "❌"
+            query = search.get('query', 'N/A')[:20] + "..." if len(search.get('query', '')) > 20 else search.get('query', 'N/A')
+            date = search.get('timestamp', datetime.utcnow()).strftime('%d.%m %H:%M')
+            balance_text += f"{status} `{query}` - {date}\n"
+        balance_text += "\n"
+    
+    # Recommendations
     if user.attempts_remaining == 0:
+        balance_text += "🚨 *═══ ПОПЫТКИ ЗАКОНЧИЛИСЬ ═══*\n"
         balance_text += "🔗 *Получите больше попыток:*\n"
-        balance_text += "Используйте /referral для получения реферальной ссылки"
+        balance_text += "• Пригласите друзей по реферальной ссылке\n"
+        balance_text += "• Используйте `/referral` для получения ссылки\n"
+        balance_text += "• За каждого друга: +1 попытка\n\n"
+    elif user.attempts_remaining <= 3:
+        balance_text += "⚠️ *═══ МАЛО ПОПЫТОК ═══*\n"
+        balance_text += "💡 Рекомендуем пригласить друзей для получения дополнительных попыток!\n"
+        balance_text += "🔗 Команда: `/referral`\n\n"
+    
+    balance_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    balance_text += "💡 *Хотите больше попыток? Используйте* `/referral`"
     
     await send_telegram_message(chat_id, balance_text)
 
